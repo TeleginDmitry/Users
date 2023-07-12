@@ -3,6 +3,7 @@
 	"version": "1.0.0",
 	"description": "",
 	"main": "index.js",
+	"type": "module",
 	"scripts": {
 		"build": "webpack",
 		"start": "webpack serve --open --mode development",
@@ -25,5 +26,8 @@
 		"webpack": "^5.88.1",
 		"webpack-cli": "^5.1.4",
 		"webpack-dev-server": "^4.15.1"
+	},
+	"dependencies": {
+		"axios": "^1.4.0"
 	}
 }
