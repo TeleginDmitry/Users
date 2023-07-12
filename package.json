@@ -1,0 +1,29 @@
+{
+	"name": "user-tables",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"build": "webpack",
+		"start": "webpack serve --open --mode development",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"prettier": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css,scss}\""
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"babel-loader": "^9.1.3",
+		"copy-webpack-plugin": "^11.0.0",
+		"css-loader": "^6.8.1",
+		"html-webpack-plugin": "^5.5.3",
+		"mini-css-extract-plugin": "^2.7.6",
+		"postcss-loader": "^7.3.3",
+		"postcss-preset-env": "^9.0.0",
+		"prettier": "^3.0.0",
+		"style-loader": "^3.3.3",
+		"webpack": "^5.88.1",
+		"webpack-cli": "^5.1.4",
+		"webpack-dev-server": "^4.15.1"
+	}
+}
