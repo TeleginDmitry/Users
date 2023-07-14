@@ -318,7 +318,13 @@ clearElement.addEventListener("click", async () => {
     limit: 5,
   };
 
-  await getUsersFunc();
+	users = []
+
+  const data = await getUsersFunc();
+
+	if (data.length < 5) hasNextPage = false;
+
+	createUserItem(data);
 
   hasNextPage = true;
 });
