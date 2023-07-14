@@ -17,10 +17,14 @@ module.exports = {
 	module: {
 		rules: [
 			{
-				test: /\.css$/,
-				use: [MiniCssExtractPlugin.loader, 'css-loader', 'postcss-loader'],
-				exclude: /node_modules/,
-			},
+        test: /\.css$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          'postcss-loader',
+        ],
+        exclude: /node_modules/,
+      },
 			{ test: /\.(js)$/, use: 'babel-loader' },
 			{
 				test: /\.svg$/,
@@ -37,9 +41,9 @@ module.exports = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
-			template: path.resolve(__dirname, 'src', 'templates', 'index.html'),
-			filename: 'templates/[name].[contenthash].html',
-			publicPath: '../',
+			template: path.resolve(__dirname, 'src', 'index.html'),
+			filename: 'index.html',
+			publicPath: './',
 		}),
 		new webpack.ProgressPlugin(),
 		new MiniCssExtractPlugin({
@@ -47,6 +51,9 @@ module.exports = {
 		}),
 		new CopyWebpackPlugin({
 			patterns: [{ from: 'src/assets/icons', to: 'assets/icons' }],
+		}),
+		new CopyWebpackPlugin({
+			patterns: [{ from: 'src/assets/styles', to: 'assets/styles' }],
 		}),
 	],
 	devServer: {

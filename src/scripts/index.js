@@ -1,320 +1,332 @@
+"use strict";
+
+import { $ } from "./selectors.js";
+import { getUsers } from "../services/user.service.js";
 import {
-	ACTIVE_SORT_CLASS,
-	ORDER_BY_PARAM,
-	ORDER_PARAM,
-	SEARCH_PARAM,
-	VISIBLE_CLASS,
-} from '../config/index.config.js'
-import { getUsers } from '../services/user.service.js'
-import { $ } from './selectors.js'
+  ACTIVE_SORT_CLASS,
+  ORDER_BY_PARAM,
+  ORDER_PARAM,
+  SEARCH_PARAM,
+  VISIBLE_CLASS,
+} from "../config/index.config.js";
+import { converteDate } from "../utils/converteDate.js";
 
-const usersList = $('tbody')
-const clearElement = $('.clear')
-const sortDateElement = $('.sort_date')
-const sortRatingElement = $('.sort_rating')
+const usersList = $("tbody");
+const clearElement = $(".clear");
+const sortDateElement = $(".sort_date");
+const sortRatingElement = $(".sort_rating");
+const buttonNext = $(".button__next");
+const buttonPrevious = $(".button__previous");
+const input = $(".input");
+const modal = $(".modal");
+const modalButton = $(".modal__button");
+const modalButtonNot = $(".button__not");
 
-function converteDate(date) {
-	const originalDate = date
-	const dateObject = new Date(originalDate)
+let hasNextPage;
+let users = [];
+let paramsQuery = { page: 1, limit: 5 };
+let deletedIds = [];
 
-	const day = dateObject.getDate()
-	const month = dateObject.getMonth() + 1
-	const year = dateObject.getFullYear() % 100
+function deleteAllTr(arrayId) {
+  const itemsList = usersList.querySelectorAll("tr");
 
-	const formattedDate = `${day < 10 ? '0' + day : day}.${
-		month < 10 ? '0' + month : month
-	}.${year}`
-
-	return formattedDate
+  itemsList.forEach((item) => {
+    if (Array.isArray(arrayId)) {
+      arrayId.forEach((id) => {
+        if (id === item.id) item.remove();
+      });
+    } else {
+      item.remove();
+    }
+  });
 }
 
-function createUserItem({ username, email, registration_date, rating }) {
-	const tr = document.createElement('tr')
-	tr.classList.add('table__item')
-	tr.innerHTML = `
-    <td>${username}</td>
-    <td>${email}</td>
-    <td>${converteDate(registration_date)}</td>
-    <td>${rating}</td>
- `
+function createUserItem(users) {
+  deleteAllTr();
 
-	usersList.append(tr)
+  users.forEach(({ username, email, registration_date, rating, id }) => {
+    const tr = document.createElement("tr");
+    tr.id = id;
+    tr.classList.add("table__item");
+    tr.innerHTML = `
+			<td>${username}</td>
+			<td>${email}</td>
+			<td>${converteDate(registration_date)}</td>
+			<td>${rating}</td>
+		`;
 
-	const img = document.createElement('img')
-	img.classList.add('cancel')
-	img.src = '../assets/icons/cancel.svg'
+    usersList.append(tr);
 
-	img.addEventListener('click', () => {
-		document.body.classList.add('overflow')
-		modal.classList.add('active')
-	})
+    const img = document.createElement("img");
+    img.classList.add("cancel");
+    img.src = "./assets/icons/cancel.svg";
 
-	tr.append(img)
+    img.addEventListener("click", () => {
+      document.body.classList.add("overflow");
+      modal.classList.add("active");
+
+      deletedIds.push(id);
+    });
+
+    tr.append(img);
+  });
+}
+
+async function getUsersFunc() {
+  const response = await getUsers(paramsQuery);
+  const data = response.data;
+
+  if (!data.length) return (hasNextPage = false);
+
+  hasNextPage = true;
+
+  users.push(...data);
+
+  paramsQuery["page"] += 1;
+
+  return data;
 }
 
 function changeLink(searchParams) {
-	window.history.replaceState(
-		{},
-		'',
-		`${window.location.pathname}?${searchParams}`
-	)
+  window.history.replaceState(
+    {},
+    "",
+    `${window.location.pathname}?${searchParams}`,
+  );
 }
 
-function deleteAllTr() {
-	const itemsList = usersList.querySelectorAll('tr')
+buttonNext.addEventListener("click", async () => {
+  if (!hasNextPage) return;
 
-	itemsList.forEach(item => {
-		item.remove()
-	})
-}
+  buttonNext.disabled = true;
 
-let isEnableObserver = false
+  const page = paramsQuery["page"] - 1;
+  const limit = paramsQuery["limit"];
 
-let paramsQuery = { page: 1, limit: 5 }
-let users = []
+  if (page * limit < users.length) {
+    const usersArray = users.slice(page * limit - 1, (page + 1) * limit - 1);
 
-async function get() {
-	const response = await getUsers(paramsQuery)
-	const data = response.data
+    createUserItem(usersArray);
 
-	if (!data.length) return (isEnableObserver = false)
+    paramsQuery["page"] += 1;
+  } else {
+    const data = await getUsersFunc();
 
-	users.push(...data)
+    if (data.length < 5) hasNextPage = false;
 
-	users.forEach(user => {
-		createUserItem(user)
-	})
+    if (data.length) {
+      createUserItem(data);
+    }
+  }
 
-	paramsQuery['page'] += 1
-}
+  buttonNext.disabled = false;
+});
 
-const observerElement = $('.observer')
+buttonPrevious.addEventListener("click", () => {
+  const page = paramsQuery["page"] - 2;
+  const limit = paramsQuery["limit"];
 
-const observerCallback = (entries, observer) => {
-	entries.forEach(async entry => {
-		if (entry.isIntersecting && isEnableObserver) {
-			console.log('observer')
-			await get(paramsQuery)
-		}
-	})
-}
+  if (page < 1) return;
 
-const observerOptions = {}
+  const usersArray = users.slice((page - 1) * limit, page * limit);
 
-const observer = new IntersectionObserver(observerCallback, observerOptions)
+  createUserItem(usersArray);
 
-observer.observe(observerElement)
+  paramsQuery["page"] -= 1;
 
-const input = $('.input')
+  hasNextPage = true;
+});
 
-let timeout
+let timeout;
 
-input.addEventListener('input', event => {
-	clearTimeout(timeout)
+input.addEventListener("input", (event) => {
+  clearTimeout(timeout);
 
-	timeout = setTimeout(async () => {
-		const value = event.target.value
+  timeout = setTimeout(async () => {
+    const value = event.target.value;
 
-		const searchParams = new URLSearchParams(window.location.search)
+    const searchParams = new URLSearchParams(window.location.search);
+    users = [];
+    paramsQuery["page"] = 1;
 
-		users = []
+    if (!value.length) {
+      searchParams.delete(SEARCH_PARAM);
 
-		paramsQuery['page'] = 1
+      clearElement.classList.remove(VISIBLE_CLASS);
 
-		isEnableObserver = false
+      delete paramsQuery["search"];
 
-		const itemsList = usersList.querySelectorAll('tr')
+      users = [];
+    } else {
+      searchParams.set(SEARCH_PARAM, value);
 
-		itemsList.forEach(item => {
-			item.remove()
-		})
+      clearElement.classList.add(VISIBLE_CLASS);
 
-		if (!value.length) {
-			searchParams.delete(SEARCH_PARAM)
+      paramsQuery["search"] = value;
+    }
 
-			users.forEach(user => {
-				createUserItem(user)
-			})
+    changeLink(searchParams);
 
-			clearElement.classList.remove(VISIBLE_CLASS)
+    const data = await getUsersFunc();
 
-			delete paramsQuery['search']
-		} else {
-			searchParams.set(SEARCH_PARAM, value)
+    createUserItem(data);
+  }, 200);
+});
 
-			clearElement.classList.add(VISIBLE_CLASS)
-
-			paramsQuery['search'] = value
-		}
-
-		changeLink(searchParams)
-
-		await get()
-
-		isEnableObserver = true
-	}, 200)
-})
-
-const urlParams = new URLSearchParams(window.location.search)
+const urlParams = new URLSearchParams(window.location.search);
 
 if (urlParams.has(SEARCH_PARAM)) {
-	const searchValue = urlParams.get(SEARCH_PARAM)
-	paramsQuery[SEARCH_PARAM] = searchValue
-	input.value = searchValue
+  const searchValue = urlParams.get(SEARCH_PARAM);
+  paramsQuery[SEARCH_PARAM] = searchValue;
+  input.value = searchValue;
 
-	clearElement.classList.add(VISIBLE_CLASS)
+  clearElement.classList.add(VISIBLE_CLASS);
 }
 if (urlParams.has(ORDER_BY_PARAM)) {
-	const orderBy = urlParams.get(ORDER_BY_PARAM)
-	paramsQuery[ORDER_BY_PARAM] = orderBy
+  const orderBy = urlParams.get(ORDER_BY_PARAM);
+  paramsQuery[ORDER_BY_PARAM] = orderBy;
 
-	if (orderBy === 'registration_date') {
-		sortDateElement.classList.add(ACTIVE_SORT_CLASS)
-	} else if (orderBy === 'rating') {
-		sortRatingElement.classList.add(ACTIVE_SORT_CLASS)
-	}
+  if (orderBy === "registration_date") {
+    sortDateElement.classList.add(ACTIVE_SORT_CLASS);
+  } else if (orderBy === "rating") {
+    sortRatingElement.classList.add(ACTIVE_SORT_CLASS);
+  }
 
-	clearElement.classList.add(VISIBLE_CLASS)
+  clearElement.classList.add(VISIBLE_CLASS);
 }
 if (urlParams.has(ORDER_PARAM)) {
-	const order = urlParams.get(ORDER_PARAM)
-	paramsQuery[ORDER_PARAM] = order
+  const order = urlParams.get(ORDER_PARAM);
+  paramsQuery[ORDER_PARAM] = order;
 
-	clearElement.classList.add(VISIBLE_CLASS)
+  clearElement.classList.add(VISIBLE_CLASS);
 }
-
-const modal = $('.modal')
-const modalButton = $('.modal__button')
-const modalButtonNot = $('.button__not')
 
 function closeModal() {
-	document.body.classList.remove('overflow')
-	modal.classList.remove('active')
+  document.body.classList.remove("overflow");
+  modal.classList.remove("active");
 }
 
-modal.addEventListener('click', event => {
-	if (event.target === modal) {
-		closeModal()
-	}
-})
+modal.addEventListener("click", (event) => {
+  if (event.target === modal) {
+    closeModal();
+  }
+});
 
-modalButton.addEventListener('click', () => {})
-modalButtonNot.addEventListener('click', () => {
-	closeModal()
-})
+modalButton.addEventListener("click", () => {
+  deleteAllTr(deletedIds);
+  closeModal();
 
-let orderDate = 'asc'
-let orderRating = 'asc'
+  users = users.filter((user) => !deletedIds.includes(user.id));
+  console.log(users);
+});
 
-sortDateElement.addEventListener('click', async () => {
-	const urlParams = new URLSearchParams(window.location.search)
-	urlParams.set(ORDER_BY_PARAM, 'registration_date')
+modalButtonNot.addEventListener("click", () => {
+  closeModal();
+  deletedIds.pop();
+});
 
-	if (urlParams.get(ORDER_PARAM) === 'asc') {
-		orderDate = 'desc'
-	} else if (urlParams.get(ORDER_PARAM) === 'desc') {
-		orderDate = 'asc'
-	}
+let orderDate = "asc";
+let orderRating = "asc";
 
-	users = []
+sortDateElement.addEventListener("click", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  urlParams.set(ORDER_BY_PARAM, "registration_date");
 
-	isEnableObserver = false
+  if (urlParams.get(ORDER_PARAM) === "asc") {
+    orderDate = "desc";
+  } else if (urlParams.get(ORDER_PARAM) === "desc") {
+    orderDate = "asc";
+  }
 
-	deleteAllTr()
+  urlParams.set(ORDER_PARAM, orderDate);
 
-	urlParams.set(ORDER_PARAM, orderDate)
+  changeLink(urlParams);
 
-	changeLink(urlParams)
+  users = [];
 
-	paramsQuery['page'] = 1
-	paramsQuery[ORDER_BY_PARAM] = 'registration_date'
-	paramsQuery[ORDER_PARAM] = orderDate
+  paramsQuery["page"] = 1;
+  paramsQuery[ORDER_BY_PARAM] = "registration_date";
+  paramsQuery[ORDER_PARAM] = orderDate;
 
-	await get()
+  const data = await getUsersFunc();
 
-	isEnableObserver = true
+  if (data.length < 5) hasNextPage = false;
 
-	sortRatingElement.classList.remove(ACTIVE_SORT_CLASS)
-	sortDateElement.classList.add(ACTIVE_SORT_CLASS)
-	clearElement.classList.add(VISIBLE_CLASS)
+  createUserItem(data);
 
-	if (orderDate === 'asc') orderDate = 'desc'
-	else orderDate = 'asc'
-})
+  sortRatingElement.classList.remove(ACTIVE_SORT_CLASS);
+  sortDateElement.classList.add(ACTIVE_SORT_CLASS);
+  clearElement.classList.add(VISIBLE_CLASS);
 
-sortRatingElement.addEventListener('click', async () => {
-	const urlParams = new URLSearchParams(window.location.search)
-	urlParams.set(ORDER_BY_PARAM, 'rating')
+  if (orderDate === "asc") orderDate = "desc";
+  else orderDate = "asc";
+});
 
-	if (urlParams.get(ORDER_PARAM) === 'asc') {
-		orderRating = 'desc'
-	} else if (urlParams.get(ORDER_PARAM) === 'desc') {
-		orderRating = 'asc'
-	}
+sortRatingElement.addEventListener("click", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  urlParams.set(ORDER_BY_PARAM, "rating");
 
-	users = []
+  if (urlParams.get(ORDER_PARAM) === "asc") {
+    orderRating = "desc";
+  } else if (urlParams.get(ORDER_PARAM) === "desc") {
+    orderRating = "asc";
+  }
 
-	isEnableObserver = false
+  users = [];
 
-	deleteAllTr()
+  urlParams.set(ORDER_PARAM, orderRating);
 
-	urlParams.set(ORDER_PARAM, orderRating)
+  changeLink(urlParams);
 
-	changeLink(urlParams)
+  paramsQuery["page"] = 1;
+  paramsQuery[ORDER_BY_PARAM] = "rating";
+  paramsQuery[ORDER_PARAM] = orderRating;
 
-	paramsQuery['page'] = 1
-	paramsQuery[ORDER_BY_PARAM] = 'rating'
-	paramsQuery[ORDER_PARAM] = orderRating
+  const data = await getUsersFunc();
 
-	await get()
+  if (data.length < 5) hasNextPage = false;
 
-	isEnableObserver = true
+  createUserItem(data);
 
-	sortDateElement.classList.remove(ACTIVE_SORT_CLASS)
-	sortRatingElement.classList.add(ACTIVE_SORT_CLASS)
-	clearElement.classList.add(VISIBLE_CLASS)
+  sortDateElement.classList.remove(ACTIVE_SORT_CLASS);
+  sortRatingElement.classList.add(ACTIVE_SORT_CLASS);
+  clearElement.classList.add(VISIBLE_CLASS);
 
-	if (orderRating === 'asc') orderRating = 'desc'
-	else orderRating = 'asc'
-})
+  if (orderRating === "asc") orderRating = "desc";
+  else orderRating = "asc";
+});
 
-clearElement.addEventListener('click', async () => {
-	const urlParams = new URLSearchParams(window.location.search)
+clearElement.addEventListener("click", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
 
-	urlParams.delete(ORDER_PARAM)
-	urlParams.delete(ORDER_BY_PARAM)
-	urlParams.delete(SEARCH_PARAM)
+  urlParams.delete(ORDER_PARAM);
+  urlParams.delete(ORDER_BY_PARAM);
+  urlParams.delete(SEARCH_PARAM);
 
-	changeLink(urlParams)
+  changeLink(urlParams);
 
-	clearElement.classList.remove(VISIBLE_CLASS)
-	sortDateElement.classList.remove(ACTIVE_SORT_CLASS)
-	sortRatingElement.classList.remove(ACTIVE_SORT_CLASS)
+  clearElement.classList.remove(VISIBLE_CLASS);
+  sortDateElement.classList.remove(ACTIVE_SORT_CLASS);
+  sortRatingElement.classList.remove(ACTIVE_SORT_CLASS);
 
-	input.value = ''
-	orderDate = 'asc'
-	orderRating = 'asc'
+  input.value = "";
+  orderDate = "asc";
+  orderRating = "asc";
 
-	users = []
+  paramsQuery = {
+    page: 1,
+    limit: 5,
+  };
 
-	isEnableObserver = false
+  await getUsersFunc();
 
-	deleteAllTr()
+  hasNextPage = true;
+});
 
-	paramsQuery = {
-		page: 1,
-		limit: 5,
-	}
+document.addEventListener("DOMContentLoaded", async () => {
+  const data = await getUsersFunc();
 
-	await get()
+  if (data.length < 5) hasNextPage = false;
 
-	isEnableObserver = true
-})
-
-document.addEventListener('DOMContentLoaded', async () => {
-	await get()
-
-	console.log('DOMContentLoaded')
-
-	isEnableObserver = true
-})
+  createUserItem(data);
+});

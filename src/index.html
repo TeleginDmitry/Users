@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="stylesheet" href="../assets/styles/nullStyle.css" />
-		<link rel="stylesheet" href="../assets/styles/index.css" />
+		<link rel="stylesheet" href="./assets/styles/nullStyle.css" />
+		<link rel="stylesheet" href="./assets/styles/index.css" />
 		<title>Список пользователей</title>
 	</head>
 	<body>
@@ -29,18 +29,24 @@
 				</ul>
 			</div>
 
-			<table class="table">
-				<thead>
-					<tr>
-						<th scope="col">Имя пользователя</th>
-						<th scope="col">E-mail</th>
-						<th scope="col">Дата регистрации</th>
-						<th scope="col">Рейтинг</th>
-					</tr>
-				</thead>
-				<tbody></tbody>
-			</table>
-			<div class="observer"></div>
+			<div class="table-container">
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col">Имя пользователя</th>
+							<th scope="col">E-mail</th>
+							<th scope="col">Дата регистрации</th>
+							<th scope="col">Рейтинг</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+
+			<div class="pagination">
+				<button class="pagination__button button__previous">Назад</button>
+				<button class="pagination__button button__next">Вперёд</button>
+			</div>
 		</div>
 
 		<div class="modal">
@@ -53,10 +59,11 @@
 			</div>
 		</div>
 
-		<script type="module" src="../scripts/selectors.js"></script>
-		<script type="module" src="../config/index.config.js"></script>
-		<script type="module" src="../api/api.interceptor.js"></script>
-		<script type="module" src="../services/user.service.js"></script>
-		<script type="module" src="../scripts/index.js"></script>
+		<script type="module" src="./utils/converteDate.js"></script>
+		<script type="module" src="./scripts/selectors.js"></script>
+		<script type="module" src="./config/index.config.js"></script>
+		<script type="module" src="./api/api.interceptor.js"></script>
+		<script type="module" src="./services/user.service.js"></script>
+		<script type="module" src="./scripts/index.js"></script>
 	</body>
 </html>
