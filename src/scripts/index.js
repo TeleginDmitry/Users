@@ -4,6 +4,7 @@ import { $ } from "./selectors.js";
 import { getUsers } from "../services/user.service.js";
 import {
   ACTIVE_SORT_CLASS,
+  LIMIT,
   ORDER_BY_PARAM,
   ORDER_PARAM,
   SEARCH_PARAM,
@@ -24,7 +25,7 @@ const modalButtonNot = $(".button__not");
 
 let hasNextPage;
 let users = [];
-let paramsQuery = { page: 1, limit: 5 };
+let paramsQuery = { page: 1, limit: LIMIT };
 let deletedIds = [];
 
 function deleteAllTr(arrayId) {
@@ -43,6 +44,8 @@ function deleteAllTr(arrayId) {
 
 function createUserItem(users) {
   deleteAllTr();
+
+  if (!users.length) return;
 
   users.forEach(({ username, email, registration_date, rating, id }) => {
     const tr = document.createElement("tr");
@@ -112,7 +115,7 @@ buttonNext.addEventListener("click", async () => {
   } else {
     const data = await getUsersFunc();
 
-    if (data.length < 5) hasNextPage = false;
+    if (data.length < LIMIT) hasNextPage = false;
 
     if (data.length) {
       createUserItem(data);
@@ -217,7 +220,6 @@ modalButton.addEventListener("click", () => {
   closeModal();
 
   users = users.filter((user) => !deletedIds.includes(user.id));
-  console.log(users);
 });
 
 modalButtonNot.addEventListener("click", () => {
@@ -250,7 +252,7 @@ sortDateElement.addEventListener("click", async () => {
 
   const data = await getUsersFunc();
 
-  if (data.length < 5) hasNextPage = false;
+  if (data.length < LIMIT) hasNextPage = false;
 
   createUserItem(data);
 
@@ -284,7 +286,7 @@ sortRatingElement.addEventListener("click", async () => {
 
   const data = await getUsersFunc();
 
-  if (data.length < 5) hasNextPage = false;
+  if (data.length < LIMIT) hasNextPage = false;
 
   createUserItem(data);
 
@@ -315,16 +317,16 @@ clearElement.addEventListener("click", async () => {
 
   paramsQuery = {
     page: 1,
-    limit: 5,
+    limit: LIMIT,
   };
 
-	users = []
+  users = [];
 
   const data = await getUsersFunc();
 
-	if (data.length < 5) hasNextPage = false;
+  if (data.length < LIMIT) hasNextPage = false;
 
-	createUserItem(data);
+  createUserItem(data);
 
   hasNextPage = true;
 });
@@ -332,7 +334,7 @@ clearElement.addEventListener("click", async () => {
 document.addEventListener("DOMContentLoaded", async () => {
   const data = await getUsersFunc();
 
-  if (data.length < 5) hasNextPage = false;
+  if (data.length < LIMIT) hasNextPage = false;
 
   createUserItem(data);
 });

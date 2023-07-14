@@ -95,6 +95,7 @@ body.overflow {
 
 .sort__item.active {
   color: rgba(51, 51, 51, 1);
+  text-decoration: underline;
 }
 
 @media (max-width: 425px) {
@@ -123,29 +124,29 @@ body.overflow {
   width: 100%;
 }
 
-tr {
-  display: flex;
-  width: 100%;
-}
-
 th,
 td {
   color: rgba(158, 170, 180, 1);
-  flex: 1 1 25%;
   text-align: left;
+  overflow-wrap: break-word;
 }
 
-tbody {
-  display: flex;
-  flex-direction: column;
+tr {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) 25px;
+  align-items: center;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  tr {
+    grid-template-columns: 130px 200px 150px 95px 25px;
+  }
 }
 
 tbody tr {
   border-top: 1px solid rgb(247, 247, 247);
   padding: 25px 0px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
   position: relative;
 }
 
@@ -157,17 +158,11 @@ tbody tr:first-child {
   margin-top: 20px;
 }
 
-thead tr {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+tbody tr:last-child {
+  padding-bottom: 0px;
 }
 
 .cancel {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
   width: 20px;
   height: 20px;
   cursor: pointer;

@@ -7,3 +7,5 @@ export const ORDER_BY_PARAM = "orderBy";
 export const VISIBLE_CLASS = "visible";
 
 export const ACTIVE_SORT_CLASS = "active";
+
+export const LIMIT = 5;
